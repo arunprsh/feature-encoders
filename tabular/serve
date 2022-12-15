@@ -13,6 +13,7 @@ import numpy as np
 import logging
 import pickle
 import joblib
+import sys
 import os
 
 
@@ -24,6 +25,14 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.getLevelName('INFO'), 
                     handlers=[logging.StreamHandler(sys.stdout)], 
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                    
+                    
+# Function transformer
+def days_since(date_str):
+    date = datetime.strptime(date_str, '%m-%d-%Y')
+    now = datetime.now()
+    return (now - date).days
+    
 
 class FeatureEncoder:
     """
@@ -145,27 +154,19 @@ def ping():
 @app.route('/invocations', methods=['POST'])
 def invoke():
     data = None
-
-    # Transform payload in CSV to Pandas DataFrame.
-    if request.content_type == 'text/csv':
-        logger.info(f'RAW = {request.data}')
-        data = request.data.decode('utf-8')
-        logger.info(f'RAW  utf = {data}')
-        logger.info(f'RAW  utf type = {type(data)}')
-        data = StringIO(data)
-        logger.info(f'RAW  stringio  = {data}')
-        logger.info(f'RAW  stringio type = {type(data)}')
-    else:
-        return flask.Response(response='This Predictor only supports CSV data', status=415, mimetype='text/plain')
-
-    logger.info('Invoked with {} records'.format(len(data)))
     
-    encoded_data = FeatureEncoder.encode(data)
+    if request.content_type == 'text/csv':
+        payload = request.data.decode('utf-8')
+    else:
+        return flask.Response(response='This encoder only supports CSV data', status=415, mimetype='text/plain')
+        
+    logger.info(f'Incoming payload: {payload}')
+    
+    encoded_data = FeatureEncoder.encode(payload)
     encoded_data = np.hstack(encoded_data).tolist()
-    logger.info(f'  encoded_data  = {encoded_data}')
-    logger.info(f'  encoded_data type = {type(encoded_data)}')
-
-    feature_vector = []
+    feature_vector = ','.join(map(str, encoded_data))
+    
+    logger.info(f'Feature vector: {feature_vector}')
 
     return Response(response=feature_vector, status=200, mimetype='text/csv')
 
