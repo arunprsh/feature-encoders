@@ -36,7 +36,7 @@ def days_since(date_str):
 
 class FeatureEncoder:
     """
-    Singleton Class for holding the transforms
+    Singleton Class for holding all the encoders.
     """
     date_transformer = None
     minmax_scaler_total_purchases = None
@@ -46,8 +46,8 @@ class FeatureEncoder:
     onehot_encoder = None
     age_group_encoder = None
     
-    MAX_ACTIVE_DAYS = 10024
-    MAX_AGE_GROUP = 5
+    MAX_ACTIVE_DAYS = 10024  # Days since the retail company was founded
+    MAX_AGE_GROUP = 5 
     
     @classmethod
     def load_date_transformer(cls):
@@ -153,8 +153,6 @@ def ping():
 
 @app.route('/invocations', methods=['POST'])
 def invoke():
-    data = None
-    
     if request.content_type == 'text/csv':
         payload = request.data.decode('utf-8')
     else:
